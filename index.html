@@ -30,7 +30,7 @@
         }
         @keyframes hand-point {
             0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(5px) scale(1.05); }
+            50% { transform: translateY(-5px) scale(1.05); }
         }
         .hand-animation { animation: hand-point 1.5s ease-in-out infinite; }
         
@@ -53,6 +53,7 @@
                 <button data-difficulty="medium" class="w-full bg-yellow-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-yellow-600">Средний (7-9 букв)</button>
                 <button data-difficulty="hard" class="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-red-600">Сложный (10+ букв)</button>
                 <button data-difficulty="random" class="w-full bg-purple-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-purple-600">Бог рандома</button>
+                <button id="start-tutorial-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-blue-600 mt-4">Обучение</button>
             </div>
         </div>
     </div>
@@ -72,7 +73,7 @@
     <!-- Обучение -->
     <div id="tutorial-overlay" class="fixed inset-0 bg-black bg-opacity-75 z-40 hidden flex flex-col items-center justify-center text-white p-4">
         <div id="tutorial-text" class="text-xl sm:text-2xl font-bold text-center mb-4"></div>
-        <div id="tutorial-hand" class="text-5xl absolute hand-animation">👇</div>
+        <div id="tutorial-hand" class="text-5xl absolute hand-animation transform -scale-y-100">👆</div>
         <button id="tutorial-skip" class="absolute top-4 right-4 bg-white/20 px-4 py-2 rounded-lg">Пропустить</button>
     </div>
 
@@ -138,6 +139,7 @@
             tutorialText: document.getElementById('tutorial-text'),
             tutorialHand: document.getElementById('tutorial-hand'),
             tutorialSkip: document.getElementById('tutorial-skip'),
+            startTutorialBtn: document.getElementById('start-tutorial-btn'),
         };
         const ctx = elements.canvas.getContext('2d');
 
@@ -184,22 +186,16 @@
 
         // --- Функции отрисовки ---
         const draw = {
-            gallows: () => { /* ... код без изменений ... */ },
-            hangman: () => { /* ... код без изменений ... */ },
-            resizeCanvas: () => { /* ... код без изменений ... */ }
+            gallows: () => { ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height); ctx.lineCap = 'round'; const w = elements.canvas.width, h = elements.canvas.height; const gradient = ctx.createLinearGradient(0, h, 0, 0); gradient.addColorStop(0, "#A96E49"); gradient.addColorStop(0.1, "#A96E49"); gradient.addColorStop(0.15, "#E54B4B"); gradient.addColorStop(1, "#F16A4C"); ctx.strokeStyle = gradient; ctx.lineWidth = w * 0.03; ctx.beginPath(); ctx.moveTo(w * 0.1, h * 0.95); ctx.lineTo(w * 0.9, h * 0.95); ctx.stroke(); ctx.beginPath(); ctx.moveTo(w * 0.25, h * 0.95); ctx.lineTo(w * 0.25, h * 0.1); ctx.lineTo(w * 0.65, h * 0.1); ctx.stroke(); ctx.strokeStyle = '#A96E49'; ctx.lineWidth = w * 0.015; ctx.beginPath(); ctx.moveTo(w * 0.65, h * 0.1); ctx.lineTo(w * 0.65, h * 0.2); ctx.stroke(); },
+            hangman: () => { const w = elements.canvas.width, h = elements.canvas.height, centerX = w * 0.65, headY = h * 0.25, radius = w * 0.05; ctx.strokeStyle = '#333333'; ctx.lineWidth = w * 0.02; ctx.beginPath(); if (wrongGuesses > 0) { ctx.arc(centerX, headY, radius, 0, Math.PI * 2); } if (wrongGuesses > 1) { ctx.moveTo(centerX, headY + radius); ctx.lineTo(centerX, headY + radius + h * 0.2); } if (wrongGuesses > 2) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 3) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 4) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.3); } if (wrongGuesses > 5) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.3); } ctx.stroke(); },
+            resizeCanvas: () => { const container = elements.canvas.parentElement; const size = Math.min(container.clientWidth, container.clientHeight); elements.canvas.width = size; elements.canvas.height = size; draw.gallows(); draw.hangman(); }
         };
-        // Копируем код отрисовки из предыдущей версии, так как он не менялся
-        draw.gallows = () => { ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height); ctx.lineCap = 'round'; const w = elements.canvas.width, h = elements.canvas.height; const gradient = ctx.createLinearGradient(0, h, 0, 0); gradient.addColorStop(0, "#A96E49"); gradient.addColorStop(0.1, "#A96E49"); gradient.addColorStop(0.15, "#E54B4B"); gradient.addColorStop(1, "#F16A4C"); ctx.strokeStyle = gradient; ctx.lineWidth = w * 0.03; ctx.beginPath(); ctx.moveTo(w * 0.1, h * 0.95); ctx.lineTo(w * 0.9, h * 0.95); ctx.stroke(); ctx.beginPath(); ctx.moveTo(w * 0.25, h * 0.95); ctx.lineTo(w * 0.25, h * 0.1); ctx.lineTo(w * 0.65, h * 0.1); ctx.stroke(); ctx.strokeStyle = '#A96E49'; ctx.lineWidth = w * 0.015; ctx.beginPath(); ctx.moveTo(w * 0.65, h * 0.1); ctx.lineTo(w * 0.65, h * 0.2); ctx.stroke(); };
-        draw.hangman = () => { const w = elements.canvas.width, h = elements.canvas.height, centerX = w * 0.65, headY = h * 0.25, radius = w * 0.05; ctx.strokeStyle = '#333333'; ctx.lineWidth = w * 0.02; ctx.beginPath(); if (wrongGuesses > 0) { ctx.arc(centerX, headY, radius, 0, Math.PI * 2); } if (wrongGuesses > 1) { ctx.moveTo(centerX, headY + radius); ctx.lineTo(centerX, headY + radius + h * 0.2); } if (wrongGuesses > 2) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 3) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 4) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.3); } if (wrongGuesses > 5) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.3); } ctx.stroke(); };
-        draw.resizeCanvas = () => { const container = elements.canvas.parentElement; const size = Math.min(container.clientWidth, container.clientHeight); elements.canvas.width = size; elements.canvas.height = size; draw.gallows(); draw.hangman(); };
-
 
         // --- Игровые функции ---
         const game = {
             start: async () => {
                 await vk.init();
                 vk.showBanner();
-
                 const storedData = await vk.getStorage(['stats', 'saved_game', 'hints_used', 'games_played']);
                 if (storedData.stats) {
                     currentStreak = storedData.stats.currentStreak || 0;
@@ -208,7 +204,6 @@
                 }
                 hintsLeft = totalFreeHints - (storedData.hints_used || 0);
                 gamesPlayedSinceAd = storedData.games_played || 0;
-
                 if (storedData.saved_game) {
                     ui.showContinueMenu(storedData.saved_game);
                 } else if (localStorage.getItem('hangman_tutorial_shown')) {
@@ -221,7 +216,6 @@
                 difficulty = selectedDifficulty;
                 gameActive = true;
                 elements.difficultyMenu.classList.add('hidden', 'opacity-0');
-                
                 if (savedState) {
                     currentWord = savedState.word;
                     guessedLetters = savedState.guessed;
@@ -235,7 +229,6 @@
                     else wordPool = Object.values(words).flat();
                     currentWord = wordPool[Math.floor(Math.random() * wordPool.length)];
                 }
-                
                 elements.modal.classList.add('opacity-0', 'pointer-events-none');
                 ui.displayWord(); ui.createKeyboard(); draw.resizeCanvas(); ui.updateStats(); ui.updateHintCounter();
                 elements.hintButton.disabled = false; elements.hintButton.classList.remove('opacity-50');
@@ -258,10 +251,9 @@
             },
             end: (isWin) => {
                 gameActive = false;
-                vk.setStorage('saved_game', null); // Очищаем сохраненную игру
+                vk.setStorage('saved_game', null);
                 gamesPlayedSinceAd++;
                 vk.setStorage('games_played', gamesPlayedSinceAd);
-
                 setTimeout(() => {
                     elements.modal.classList.remove('opacity-0', 'pointer-events-none');
                     elements.modalContent.classList.remove('scale-95');
@@ -280,7 +272,6 @@
                     elements.modalWord.textContent = currentWord;
                     ui.updateStats();
                     vk.setStorage('stats', { currentStreak, bestStreak });
-
                     if (gamesPlayedSinceAd >= 3) {
                         vk.showInterstitial();
                         gamesPlayedSinceAd = 0;
@@ -290,21 +281,16 @@
             },
             saveState: () => {
                 if (!gameActive) return;
-                const state = {
-                    word: currentWord,
-                    guessed: guessedLetters,
-                    wrong: wrongGuesses,
-                    difficulty: difficulty
-                };
+                const state = { word: currentWord, guessed: guessedLetters, wrong: wrongGuesses, difficulty: difficulty };
                 vk.setStorage('saved_game', state);
             }
         };
 
         // --- UI функции ---
         const ui = {
-            displayWord: () => { /* ... код без изменений ... */ },
-            createKeyboard: () => { /* ... код без изменений ... */ },
-            updateStats: () => { /* ... код без изменений ... */ },
+            displayWord: () => { const letterWidth = window.innerWidth < 360 ? 'w-5' : 'w-6 sm:w-7'; const letterHeight = window.innerWidth < 360 ? 'h-8' : 'h-10 sm:h-12'; elements.wordContainer.innerHTML = currentWord.split('').map(letter => `<div class="flex flex-col items-center justify-end ${letterHeight}"><span class="text-black">${guessedLetters.includes(letter) ? letter : '&nbsp;'}</span><div class="${letterWidth} h-1 sm:h-1.5 bg-gray-800 mt-1"></div></div>`).join(''); if (gameActive && currentWord && currentWord.split('').every(l => guessedLetters.includes(l))) game.end(true); },
+            createKeyboard: () => { elements.keyboardContainer.innerHTML = ''; const isSmallScreen = window.innerWidth < 360 || window.innerHeight < 640; keyboardLayout.forEach(row => { const rowDiv = document.createElement('div'); rowDiv.className = 'flex justify-center gap-1'; row.split('').forEach(key => { const button = document.createElement('button'); button.textContent = key; button.id = `key-${key}`; button.className = isSmallScreen ? 'h-8 w-[6.5vw] text-sm font-medium rounded bg-gray-200' : 'h-9 w-7 sm:h-10 sm:w-8 text-base sm:text-lg font-medium rounded-md bg-gray-200 hover:bg-gray-300'; button.onclick = () => game.handleGuess(key); if (guessedLetters.includes(key)) { button.disabled = true; button.className += currentWord.includes(key) ? ' bg-[#6ABD7A] text-white' : ' bg-gray-400 text-gray-200 line-through'; } rowDiv.appendChild(button); }); elements.keyboardContainer.appendChild(rowDiv); }); },
+            updateStats: () => { elements.currentStreakEl.textContent = currentStreak; elements.bestStreakEl.textContent = bestStreak; },
             updateHintCounter: () => {
                 if (hintsLeft > 0) {
                     elements.hintCountEl.textContent = hintsLeft;
@@ -356,15 +342,39 @@
                 };
             }
         };
-        // Копируем код UI из предыдущей версии
-        ui.displayWord = () => { const letterWidth = window.innerWidth < 360 ? 'w-5' : 'w-6 sm:w-7'; const letterHeight = window.innerWidth < 360 ? 'h-8' : 'h-10 sm:h-12'; elements.wordContainer.innerHTML = currentWord.split('').map(letter => `<div class="flex flex-col items-center justify-end ${letterHeight}"><span class="text-black">${guessedLetters.includes(letter) ? letter : '&nbsp;'}</span><div class="${letterWidth} h-1 sm:h-1.5 bg-gray-800 mt-1"></div></div>`).join(''); if (gameActive && currentWord && currentWord.split('').every(l => guessedLetters.includes(l))) game.end(true); };
-        ui.createKeyboard = () => { elements.keyboardContainer.innerHTML = ''; const isSmallScreen = window.innerWidth < 360 || window.innerHeight < 640; keyboardLayout.forEach(row => { const rowDiv = document.createElement('div'); rowDiv.className = 'flex justify-center gap-1'; row.split('').forEach(key => { const button = document.createElement('button'); button.textContent = key; button.id = `key-${key}`; button.className = isSmallScreen ? 'h-8 w-[6.5vw] text-sm font-medium rounded bg-gray-200' : 'h-9 w-7 sm:h-10 sm:w-8 text-base sm:text-lg font-medium rounded-md bg-gray-200 hover:bg-gray-300'; button.onclick = () => game.handleGuess(key); if (guessedLetters.includes(key)) { button.disabled = true; button.className += currentWord.includes(key) ? ' bg-[#6ABD7A] text-white' : ' bg-gray-400 text-gray-200 line-through'; } rowDiv.appendChild(button); }); elements.keyboardContainer.appendChild(rowDiv); }); };
-        ui.updateStats = () => { elements.currentStreakEl.textContent = currentStreak; elements.bestStreakEl.textContent = bestStreak; };
 
         // --- Обучение ---
-        const tutorial = { /* ... код без изменений ... */ };
-        // Копируем код обучения
-        tutorial.steps = [{ text: "Угадайте слово по буквам", target: '#word-container' }, { text: "Нажимайте на буквы, чтобы угадать", target: '#keyboard' }, { text: "За каждую ошибку будет рисоваться человечек", target: '#hangman-canvas' }, { text: "Используйте подсказки, если застряли", target: '#hint-button' }]; tutorial.currentStep = 0; tutorial.start = () => { elements.difficultyMenu.classList.add('hidden', 'opacity-0'); game.init('easy'); gameActive = false; elements.tutorialOverlay.classList.remove('hidden'); tutorial.showStep(); }; tutorial.showStep = () => { if (tutorial.currentStep >= tutorial.steps.length) { tutorial.end(); return; } const step = tutorial.steps[tutorial.currentStep]; const targetElement = document.querySelector(step.target); const rect = targetElement.getBoundingClientRect(); elements.tutorialText.textContent = step.text; elements.tutorialHand.style.top = `${rect.bottom}px`; elements.tutorialHand.style.left = `${rect.left + rect.width / 2 - 15}px`; tutorial.currentStep++; }; tutorial.end = () => { elements.tutorialOverlay.classList.add('hidden'); localStorage.setItem('hangman_tutorial_shown', 'true'); gameActive = true; elements.playAgainButton.click(); };
+        const tutorial = {
+            steps: [{ text: "Угадайте слово по буквам", target: '#word-container' }, { text: "Нажимайте на буквы, чтобы угадать", target: '#keyboard' }, { text: "За каждую ошибку будет рисоваться человечек", target: '#hangman-container' }, { text: "Используйте подсказки, если застряли", target: '#hint-button' }],
+            currentStep: 0,
+            start: () => {
+                elements.difficultyMenu.classList.add('hidden', 'opacity-0');
+                game.init('easy');
+                gameActive = false;
+                elements.tutorialOverlay.classList.remove('hidden');
+                tutorial.showStep();
+            },
+            showStep: () => {
+                if (tutorial.currentStep >= tutorial.steps.length) {
+                    tutorial.end(); return;
+                }
+                const step = tutorial.steps[tutorial.currentStep];
+                const targetElement = document.querySelector(step.target);
+                const rect = targetElement.getBoundingClientRect();
+                elements.tutorialText.textContent = step.text;
+                // Позиционируем палец НАД элементом
+                const handHeight = elements.tutorialHand.offsetHeight || 50; // Fallback height
+                elements.tutorialHand.style.top = `${rect.top - handHeight - 10}px`;
+                elements.tutorialHand.style.left = `${rect.left + rect.width / 2 - (elements.tutorialHand.offsetWidth / 2)}px`;
+                tutorial.currentStep++;
+            },
+            end: () => {
+                elements.tutorialOverlay.classList.add('hidden');
+                localStorage.setItem('hangman_tutorial_shown', 'true');
+                gameActive = true;
+                elements.playAgainButton.click();
+            }
+        };
 
         // --- Обработчики событий ---
         window.addEventListener('resize', () => { draw.resizeCanvas(); ui.createKeyboard(); });
@@ -374,23 +384,16 @@
         });
         elements.hintButton.addEventListener('click', ui.useHint);
         elements.difficultyMenu.addEventListener('click', (e) => {
-            if (e.target.matches('button[data-difficulty]')) {
-                game.init(e.target.dataset.difficulty);
+            if (e.target.closest('button[data-difficulty]')) {
+                game.init(e.target.closest('button[data-difficulty]').dataset.difficulty);
             }
         });
+        elements.startTutorialBtn.addEventListener('click', tutorial.start);
         elements.closeMenuButton.addEventListener('click', ui.closeMenu);
         elements.menuButton.addEventListener('click', ui.showDifficultyMenu);
         elements.tutorialOverlay.addEventListener('click', tutorial.showStep);
         elements.tutorialSkip.addEventListener('click', (e) => { e.stopPropagation(); tutorial.end(); });
-
-        // Слушаем события видимости для сохранения игры
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                game.saveState();
-            }
-        });
-        
-        // Слушаем события баннера для адаптации
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') game.saveState(); });
         vkBridge.subscribe((e) => {
             if (e.detail.type === 'VKWebAppBannerAdUpdated') {
                 const bannerHeight = e.detail.data.height;
