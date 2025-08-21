@@ -22,22 +22,26 @@
             position: fixed;
             width: 100%;
         }
-        .modal-overlay, #difficulty-menu, #continue-game-menu {
+        .modal-overlay, #difficulty-menu, #continue-game-menu, #tutorial-modal {
             transition: opacity 0.3s ease;
         }
-        .modal-content, #difficulty-content, #continue-game-content {
+        .modal-content, #difficulty-content, #continue-game-content, #tutorial-content {
             transition: transform 0.3s ease;
         }
-        @keyframes hand-point {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-5px) scale(1.05); }
-        }
-        .hand-animation { animation: hand-point 1.5s ease-in-out infinite; }
         
         @media (max-height: 600px) {
             main { justify-content: space-evenly; }
             #word-container, #keyboard, .mt-2 { margin-top: 0.25rem; margin-bottom: 0.25rem; }
             #hangman-container { max-height: 180px; flex-shrink: 1; }
+        }
+
+        /* Анимация для клавиатуры в обучении */
+        @keyframes keypress-tutorial {
+            0%, 100% { transform: scale(1); background-color: #e5e7eb; }
+            50% { transform: scale(0.9); background-color: #9ca3af; }
+        }
+        .key-anim {
+            animation: keypress-tutorial 2s ease-in-out infinite;
         }
     </style>
 </head>
@@ -70,11 +74,23 @@
         </div>
     </div>
 
-    <!-- Обучение -->
-    <div id="tutorial-overlay" class="fixed inset-0 bg-black bg-opacity-75 z-40 hidden flex flex-col items-center justify-center text-white p-4">
-        <div id="tutorial-text" class="text-xl sm:text-2xl font-bold text-center mb-4"></div>
-        <div id="tutorial-hand" class="text-5xl absolute hand-animation transform -scale-y-100">👆</div>
-        <button id="tutorial-skip" class="absolute top-4 right-4 bg-white/20 px-4 py-2 rounded-lg">Пропустить</button>
+    <!-- Окно обучения -->
+    <div id="tutorial-modal" class="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center p-4 z-40 hidden">
+        <div id="tutorial-content" class="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl w-full max-w-sm relative">
+             <button id="close-tutorial-button" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <h3 class="text-xl font-bold text-center mb-2">Как играть</h3>
+            <div class="bg-gray-100 p-2 rounded-lg">
+                <p id="tutorial-text" class="text-center text-gray-700 font-medium mb-2 h-12 flex items-center justify-center"></p>
+                <!-- Миниатюра игры -->
+                <div class="w-full max-w-[200px] mx-auto aspect-square relative"><canvas id="tutorial-canvas"></canvas></div>
+                <div id="tutorial-word" class="flex justify-center gap-1 my-2 text-2xl font-bold"></div>
+                <div class="flex justify-center gap-1">
+                    <div id="tutorial-key-A" class="h-8 w-8 text-base font-medium rounded-md bg-gray-200 flex items-center justify-center">A</div>
+                    <div id="tutorial-key-B" class="h-8 w-8 text-base font-medium rounded-md bg-gray-200 flex items-center justify-center">Б</div>
+                    <div id="tutorial-key-C" class="h-8 w-8 text-base font-medium rounded-md bg-gray-200 flex items-center justify-center">В</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="app-container" class="w-full max-w-md mx-auto flex flex-col h-full transition-all duration-300">
@@ -93,14 +109,20 @@
             <div id="keyboard" class="w-full flex flex-col items-center gap-1"></div>
             <div class="mt-2">
                 <button id="hint-button" class="w-12 h-12 sm:w-14 sm:h-14 bg-[#F9A825] rounded-full flex items-center justify-center shadow-lg relative">
-                    <div id="hint-icon-container"></div>
+                    <div id="hint-icon-container" class="relative flex items-center justify-center">
+                        <!-- Основная иконка подсказки -->
+                        <svg class="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        <!-- Иконка видео (скрыта по умолчанию) -->
+                        <div id="hint-video-icon" class="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 hidden">
+                             <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
+                        </div>
+                    </div>
                     <span id="hint-count" class="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#FDFBFA]"></span>
                 </button>
             </div>
         </main>
     </div>
     
-    <!-- Плейсхолдер для баннерной рекламы -->
     <div id="banner-placeholder" class="w-full flex-shrink-0" style="height: 0px;"></div>
 
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none modal-overlay">
@@ -112,122 +134,54 @@
     </div>
 
     <script>
-        // --- DOM элементы ---
         const elements = {
-            appContainer: document.getElementById('app-container'),
-            bannerPlaceholder: document.getElementById('banner-placeholder'),
-            wordContainer: document.getElementById('word-container'),
-            keyboardContainer: document.getElementById('keyboard'),
-            canvas: document.getElementById('hangman-canvas'),
-            currentStreakEl: document.getElementById('current-streak'),
-            bestStreakEl: document.getElementById('best-streak'),
-            hintButton: document.getElementById('hint-button'),
-            hintCountEl: document.getElementById('hint-count'),
-            hintIconContainer: document.getElementById('hint-icon-container'),
-            modal: document.getElementById('modal'),
-            modalContent: document.getElementById('modal-content'),
-            modalTitle: document.getElementById('modal-title'),
-            modalWord: document.querySelector('#modal-word span'),
-            playAgainButton: document.getElementById('play-again-button'),
-            difficultyMenu: document.getElementById('difficulty-menu'),
-            closeMenuButton: document.getElementById('close-menu-button'),
-            menuButton: document.getElementById('menu-button'),
-            continueGameMenu: document.getElementById('continue-game-menu'),
-            continueBtn: document.getElementById('continue-btn'),
-            startNewBtn: document.getElementById('start-new-btn'),
-            tutorialOverlay: document.getElementById('tutorial-overlay'),
-            tutorialText: document.getElementById('tutorial-text'),
-            tutorialHand: document.getElementById('tutorial-hand'),
-            tutorialSkip: document.getElementById('tutorial-skip'),
-            startTutorialBtn: document.getElementById('start-tutorial-btn'),
+            appContainer: document.getElementById('app-container'), bannerPlaceholder: document.getElementById('banner-placeholder'), wordContainer: document.getElementById('word-container'), keyboardContainer: document.getElementById('keyboard'), canvas: document.getElementById('hangman-canvas'), currentStreakEl: document.getElementById('current-streak'), bestStreakEl: document.getElementById('best-streak'), hintButton: document.getElementById('hint-button'), hintCountEl: document.getElementById('hint-count'), hintIconContainer: document.getElementById('hint-icon-container'), hintVideoIcon: document.getElementById('hint-video-icon'), modal: document.getElementById('modal'), modalContent: document.getElementById('modal-content'), modalTitle: document.getElementById('modal-title'), modalWord: document.querySelector('#modal-word span'), playAgainButton: document.getElementById('play-again-button'), difficultyMenu: document.getElementById('difficulty-menu'), closeMenuButton: document.getElementById('close-menu-button'), menuButton: document.getElementById('menu-button'), continueGameMenu: document.getElementById('continue-game-menu'), continueBtn: document.getElementById('continue-btn'), startNewBtn: document.getElementById('start-new-btn'), tutorialModal: document.getElementById('tutorial-modal'), tutorialContent: document.getElementById('tutorial-content'), tutorialCanvas: document.getElementById('tutorial-canvas'), tutorialWord: document.getElementById('tutorial-word'), tutorialText: document.getElementById('tutorial-text'), startTutorialBtn: document.getElementById('start-tutorial-btn'), closeTutorialButton: document.getElementById('close-tutorial-button'),
         };
         const ctx = elements.canvas.getContext('2d');
+        const tutorialCtx = elements.tutorialCanvas.getContext('2d');
 
-        // --- Игровые переменные ---
         const words = { "4": ["БАБА", "БАЗА", "БАНК"], "5": ["АББАТ", "АБЗАЦ", "АБОРТ"], "6": ["АБАЖУР", "АБСУРД", "АВАРИЯ"], "7": ["АВТОБУС", "АВТОМАТ"], "8": ["АКАДЕМИЯ", "БОЛЬНИЦА"], "9": ["АТМОСФЕРА", "ВЫРАЖЕНИЕ"], "10": ["АВТОМОБИЛЬ", "АКТИВНОСТЬ"], "11": ["БОЛЬШИНСТВО", "ВОЗВРАЩЕНИЕ"] };
         const keyboardLayout = ['ЙЦУКЕНГШЩЗХЪ', 'ФЫВАПРОЛДЖЭ', 'ЯЧСМИТЬБЮ'];
         let currentWord = '', guessedLetters = [], wrongGuesses = 0, currentStreak = 0, bestStreak = 0;
         const maxWrongGuesses = 6, totalFreeHints = 3;
         let hintsLeft = 0, gameActive = false, difficulty = 'easy', gamesPlayedSinceAd = 0;
-        const videoIconSVG = `<svg class="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>`;
-        const hintIconSVG = `<svg class="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>`;
-
-        // --- VK Bridge ---
+        
         const vk = {
             init: () => vkBridge.send('VKWebAppInit'),
-            getStorage: async (keys) => {
-                try {
-                    const data = await vkBridge.send('VKWebAppStorageGet', { keys });
-                    return data.keys.reduce((acc, item) => {
-                        acc[item.key] = item.value ? JSON.parse(item.value) : null;
-                        return acc;
-                    }, {});
-                } catch (error) { console.error('VK Storage Get Error:', error); return {}; }
-            },
-            setStorage: (key, value) => {
-                vkBridge.send('VKWebAppStorageSet', { key, value: JSON.stringify(value) });
-            },
-            showBanner: () => {
-                vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' })
-                    .then(data => console.log('Banner shown', data))
-                    .catch(error => console.error('Banner error', error));
-            },
-            showReward: async () => {
-                try {
-                    const data = await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' });
-                    return data.result; // true если успешно, false если нет
-                } catch (error) { console.error('Reward Ad Error:', error); return false; }
-            },
-            showInterstitial: () => {
-                vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' })
-                    .catch(error => console.error('Interstitial Ad Error:', error));
-            }
+            getStorage: async (keys) => { try { const data = await vkBridge.send('VKWebAppStorageGet', { keys }); return data.keys.reduce((acc, item) => { acc[item.key] = item.value ? JSON.parse(item.value) : null; return acc; }, {}); } catch (error) { console.error('VK Storage Get Error:', error); return {}; } },
+            setStorage: (key, value) => { vkBridge.send('VKWebAppStorageSet', { key, value: JSON.stringify(value) }); },
+            showBanner: () => { vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' }).catch(e => console.error('Banner error', e)); },
+            showReward: async () => { try { const d = await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' }); return d.result; } catch (e) { console.error('Reward Ad Error:', e); return false; } },
+            showInterstitial: () => { vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' }).catch(e => console.error('Interstitial Ad Error:', e)); }
         };
 
-        // --- Функции отрисовки ---
         const draw = {
-            gallows: () => { ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height); ctx.lineCap = 'round'; const w = elements.canvas.width, h = elements.canvas.height; const gradient = ctx.createLinearGradient(0, h, 0, 0); gradient.addColorStop(0, "#A96E49"); gradient.addColorStop(0.1, "#A96E49"); gradient.addColorStop(0.15, "#E54B4B"); gradient.addColorStop(1, "#F16A4C"); ctx.strokeStyle = gradient; ctx.lineWidth = w * 0.03; ctx.beginPath(); ctx.moveTo(w * 0.1, h * 0.95); ctx.lineTo(w * 0.9, h * 0.95); ctx.stroke(); ctx.beginPath(); ctx.moveTo(w * 0.25, h * 0.95); ctx.lineTo(w * 0.25, h * 0.1); ctx.lineTo(w * 0.65, h * 0.1); ctx.stroke(); ctx.strokeStyle = '#A96E49'; ctx.lineWidth = w * 0.015; ctx.beginPath(); ctx.moveTo(w * 0.65, h * 0.1); ctx.lineTo(w * 0.65, h * 0.2); ctx.stroke(); },
-            hangman: () => { const w = elements.canvas.width, h = elements.canvas.height, centerX = w * 0.65, headY = h * 0.25, radius = w * 0.05; ctx.strokeStyle = '#333333'; ctx.lineWidth = w * 0.02; ctx.beginPath(); if (wrongGuesses > 0) { ctx.arc(centerX, headY, radius, 0, Math.PI * 2); } if (wrongGuesses > 1) { ctx.moveTo(centerX, headY + radius); ctx.lineTo(centerX, headY + radius + h * 0.2); } if (wrongGuesses > 2) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 3) { ctx.moveTo(centerX, headY + radius + h * 0.05); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.15); } if (wrongGuesses > 4) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX - w * 0.1, headY + radius + h * 0.3); } if (wrongGuesses > 5) { ctx.moveTo(centerX, headY + radius + h * 0.2); ctx.lineTo(centerX + w * 0.1, headY + radius + h * 0.3); } ctx.stroke(); },
-            resizeCanvas: () => { const container = elements.canvas.parentElement; const size = Math.min(container.clientWidth, container.clientHeight); elements.canvas.width = size; elements.canvas.height = size; draw.gallows(); draw.hangman(); }
+            gallows: (context, w, h) => { context.clearRect(0, 0, w, h); context.lineCap = 'round'; const grad = context.createLinearGradient(0, h, 0, 0); grad.addColorStop(0, "#A96E49"); grad.addColorStop(0.1, "#A96E49"); grad.addColorStop(0.15, "#E54B4B"); grad.addColorStop(1, "#F16A4C"); context.strokeStyle = grad; context.lineWidth = w * 0.03; context.beginPath(); context.moveTo(w * 0.1, h * 0.95); context.lineTo(w * 0.9, h * 0.95); context.stroke(); context.beginPath(); context.moveTo(w * 0.25, h * 0.95); context.lineTo(w * 0.25, h * 0.1); context.lineTo(w * 0.65, h * 0.1); context.stroke(); context.strokeStyle = '#A96E49'; context.lineWidth = w * 0.015; context.beginPath(); context.moveTo(w * 0.65, h * 0.1); context.lineTo(w * 0.65, h * 0.2); context.stroke(); },
+            hangman: (context, w, h, parts) => { context.strokeStyle = '#333333'; context.lineWidth = w * 0.02; context.beginPath(); const cX = w * 0.65, hY = h * 0.25, r = w * 0.05; if (parts > 0) { context.arc(cX, hY, r, 0, Math.PI * 2); } if (parts > 1) { context.moveTo(cX, hY + r); context.lineTo(cX, hY + r + h * 0.2); } if (parts > 2) { context.moveTo(cX, hY + r + h * 0.05); context.lineTo(cX - w * 0.1, hY + r + h * 0.15); } if (parts > 3) { context.moveTo(cX, hY + r + h * 0.05); context.lineTo(cX + w * 0.1, hY + r + h * 0.15); } if (parts > 4) { context.moveTo(cX, hY + r + h * 0.2); context.lineTo(cX - w * 0.1, hY + r + h * 0.3); } if (parts > 5) { context.moveTo(cX, hY + r + h * 0.2); context.lineTo(cX + w * 0.1, hY + r + h * 0.3); } context.stroke(); },
+            resizeCanvas: () => { const c = elements.canvas.parentElement; const s = Math.min(c.clientWidth, c.clientHeight); elements.canvas.width = s; elements.canvas.height = s; draw.gallows(ctx, s, s); draw.hangman(ctx, s, s, wrongGuesses); }
         };
 
-        // --- Игровые функции ---
         const game = {
             start: async () => {
                 await vk.init();
                 vk.showBanner();
-                const storedData = await vk.getStorage(['stats', 'saved_game', 'hints_used', 'games_played']);
-                if (storedData.stats) {
-                    currentStreak = storedData.stats.currentStreak || 0;
-                    bestStreak = storedData.stats.bestStreak || 0;
-                    ui.updateStats();
-                }
-                hintsLeft = totalFreeHints - (storedData.hints_used || 0);
-                gamesPlayedSinceAd = storedData.games_played || 0;
-                if (storedData.saved_game) {
-                    ui.showContinueMenu(storedData.saved_game);
-                } else if (localStorage.getItem('hangman_tutorial_shown')) {
-                    ui.showDifficultyMenu();
-                } else {
-                    tutorial.start();
-                }
+                const data = await vk.getStorage(['stats', 'saved_game', 'hints_used', 'games_played']);
+                if (data.stats) { currentStreak = data.stats.currentStreak || 0; bestStreak = data.stats.bestStreak || 0; ui.updateStats(); }
+                hintsLeft = totalFreeHints - (data.hints_used || 0);
+                gamesPlayedSinceAd = data.games_played || 0;
+                if (data.saved_game) { ui.showContinueMenu(data.saved_game); } 
+                else { ui.showDifficultyMenu(); }
             },
             init: (selectedDifficulty, savedState = null) => {
-                difficulty = selectedDifficulty;
-                gameActive = true;
+                difficulty = selectedDifficulty; gameActive = true;
                 elements.difficultyMenu.classList.add('hidden', 'opacity-0');
-                if (savedState) {
-                    currentWord = savedState.word;
-                    guessedLetters = savedState.guessed;
-                    wrongGuesses = savedState.wrong;
-                } else {
-                    wrongGuesses = 0; guessedLetters = [];
-                    let wordPool = [];
-                    if (difficulty === 'easy') wordPool = [...words["4"], ...words["5"], ...words["6"]];
-                    else if (difficulty === 'medium') wordPool = [...words["7"], ...words["8"], ...words["9"]];
-                    else if (difficulty === 'hard') wordPool = [...words["10"], ...words["11"]];
-                    else wordPool = Object.values(words).flat();
-                    currentWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+                if (savedState) { currentWord = savedState.word; guessedLetters = savedState.guessed; wrongGuesses = savedState.wrong; } 
+                else { wrongGuesses = 0; guessedLetters = []; let pool = [];
+                    if (difficulty === 'easy') pool = [...words["4"], ...words["5"], ...words["6"]];
+                    else if (difficulty === 'medium') pool = [...words["7"], ...words["8"], ...words["9"]];
+                    else if (difficulty === 'hard') pool = [...words["10"], ...words["11"]];
+                    else pool = Object.values(words).flat();
+                    currentWord = pool[Math.floor(Math.random() * pool.length)];
                 }
                 elements.modal.classList.add('opacity-0', 'pointer-events-none');
                 ui.displayWord(); ui.createKeyboard(); draw.resizeCanvas(); ui.updateStats(); ui.updateHintCounter();
@@ -236,173 +190,93 @@
             handleGuess: (letter) => {
                 if (!gameActive || guessedLetters.includes(letter)) return;
                 guessedLetters.push(letter);
-                const button = document.getElementById(`key-${letter}`);
-                button.disabled = true;
-                if (currentWord.includes(letter)) {
-                    button.className = button.className.replace(/bg-gray-200|hover:bg-gray-300/g, 'bg-[#6ABD7A] text-white');
-                    ui.displayWord();
-                } else {
-                    wrongGuesses++;
-                    button.className = button.className.replace(/bg-gray-200|hover:bg-gray-300/g, 'bg-gray-400 text-gray-200 line-through');
-                    draw.hangman();
-                    if (wrongGuesses >= maxWrongGuesses) game.end(false);
-                }
+                const btn = document.getElementById(`key-${letter}`); btn.disabled = true;
+                if (currentWord.includes(letter)) { btn.className = btn.className.replace(/bg-gray-200|hover:bg-gray-300/g, 'bg-[#6ABD7A] text-white'); ui.displayWord(); } 
+                else { wrongGuesses++; btn.className = btn.className.replace(/bg-gray-200|hover:bg-gray-300/g, 'bg-gray-400 text-gray-200 line-through'); draw.hangman(ctx, elements.canvas.width, elements.canvas.height, wrongGuesses); if (wrongGuesses >= maxWrongGuesses) game.end(false); }
                 game.saveState();
             },
             end: (isWin) => {
-                gameActive = false;
-                vk.setStorage('saved_game', null);
-                gamesPlayedSinceAd++;
-                vk.setStorage('games_played', gamesPlayedSinceAd);
+                gameActive = false; vk.setStorage('saved_game', null); gamesPlayedSinceAd++; vk.setStorage('games_played', gamesPlayedSinceAd);
                 setTimeout(() => {
                     elements.modal.classList.remove('opacity-0', 'pointer-events-none');
-                    elements.modalContent.classList.remove('scale-95');
-                    if (isWin) {
-                        elements.modalTitle.textContent = 'Вы победили!';
-                        elements.modalTitle.className = 'text-2xl sm:text-3xl font-bold mb-2 text-green-500';
-                        elements.playAgainButton.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-green-600';
-                        currentStreak++;
-                        if (currentStreak > bestStreak) bestStreak = currentStreak;
-                    } else {
-                        elements.modalTitle.textContent = 'Вы проиграли!';
-                        elements.modalTitle.className = 'text-2xl sm:text-3xl font-bold mb-2 text-red-500';
-                        elements.playAgainButton.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-red-600';
-                        currentStreak = 0;
-                    }
-                    elements.modalWord.textContent = currentWord;
-                    ui.updateStats();
-                    vk.setStorage('stats', { currentStreak, bestStreak });
-                    if (gamesPlayedSinceAd >= 3) {
-                        vk.showInterstitial();
-                        gamesPlayedSinceAd = 0;
-                        vk.setStorage('games_played', 0);
-                    }
+                    if (isWin) { elements.modalTitle.textContent = 'Вы победили!'; elements.modalTitle.className = 'text-2xl sm:text-3xl font-bold mb-2 text-green-500'; elements.playAgainButton.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-green-600'; currentStreak++; if (currentStreak > bestStreak) bestStreak = currentStreak; } 
+                    else { elements.modalTitle.textContent = 'Вы проиграли!'; elements.modalTitle.className = 'text-2xl sm:text-3xl font-bold mb-2 text-red-500'; elements.playAgainButton.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:bg-red-600'; currentStreak = 0; }
+                    elements.modalWord.textContent = currentWord; ui.updateStats(); vk.setStorage('stats', { currentStreak, bestStreak });
+                    if (gamesPlayedSinceAd >= 3) { vk.showInterstitial(); gamesPlayedSinceAd = 0; vk.setStorage('games_played', 0); }
                 }, 500);
             },
-            saveState: () => {
-                if (!gameActive) return;
-                const state = { word: currentWord, guessed: guessedLetters, wrong: wrongGuesses, difficulty: difficulty };
-                vk.setStorage('saved_game', state);
-            }
+            saveState: () => { if (!gameActive) return; vk.setStorage('saved_game', { word: currentWord, guessed: guessedLetters, wrong: wrongGuesses, difficulty: difficulty }); }
         };
 
-        // --- UI функции ---
         const ui = {
-            displayWord: () => { const letterWidth = window.innerWidth < 360 ? 'w-5' : 'w-6 sm:w-7'; const letterHeight = window.innerWidth < 360 ? 'h-8' : 'h-10 sm:h-12'; elements.wordContainer.innerHTML = currentWord.split('').map(letter => `<div class="flex flex-col items-center justify-end ${letterHeight}"><span class="text-black">${guessedLetters.includes(letter) ? letter : '&nbsp;'}</span><div class="${letterWidth} h-1 sm:h-1.5 bg-gray-800 mt-1"></div></div>`).join(''); if (gameActive && currentWord && currentWord.split('').every(l => guessedLetters.includes(l))) game.end(true); },
-            createKeyboard: () => { elements.keyboardContainer.innerHTML = ''; const isSmallScreen = window.innerWidth < 360 || window.innerHeight < 640; keyboardLayout.forEach(row => { const rowDiv = document.createElement('div'); rowDiv.className = 'flex justify-center gap-1'; row.split('').forEach(key => { const button = document.createElement('button'); button.textContent = key; button.id = `key-${key}`; button.className = isSmallScreen ? 'h-8 w-[6.5vw] text-sm font-medium rounded bg-gray-200' : 'h-9 w-7 sm:h-10 sm:w-8 text-base sm:text-lg font-medium rounded-md bg-gray-200 hover:bg-gray-300'; button.onclick = () => game.handleGuess(key); if (guessedLetters.includes(key)) { button.disabled = true; button.className += currentWord.includes(key) ? ' bg-[#6ABD7A] text-white' : ' bg-gray-400 text-gray-200 line-through'; } rowDiv.appendChild(button); }); elements.keyboardContainer.appendChild(rowDiv); }); },
+            displayWord: () => { const lw = window.innerWidth < 360 ? 'w-5' : 'w-6 sm:w-7'; const lh = window.innerWidth < 360 ? 'h-8' : 'h-10 sm:h-12'; elements.wordContainer.innerHTML = currentWord.split('').map(l => `<div class="flex flex-col items-center justify-end ${lh}"><span class="text-black">${guessedLetters.includes(l) ? l : '&nbsp;'}</span><div class="${lw} h-1 sm:h-1.5 bg-gray-800 mt-1"></div></div>`).join(''); if (gameActive && currentWord && currentWord.split('').every(l => guessedLetters.includes(l))) game.end(true); },
+            createKeyboard: () => { elements.keyboardContainer.innerHTML = ''; const small = window.innerWidth < 360 || window.innerHeight < 640; keyboardLayout.forEach(row => { const rowDiv = document.createElement('div'); rowDiv.className = 'flex justify-center gap-1'; row.split('').forEach(key => { const btn = document.createElement('button'); btn.textContent = key; btn.id = `key-${key}`; btn.className = small ? 'h-8 w-[6.5vw] text-sm font-medium rounded bg-gray-200' : 'h-9 w-7 sm:h-10 sm:w-8 text-base sm:text-lg font-medium rounded-md bg-gray-200 hover:bg-gray-300'; btn.onclick = () => game.handleGuess(key); if (guessedLetters.includes(key)) { btn.disabled = true; btn.className += currentWord.includes(key) ? ' bg-[#6ABD7A] text-white' : ' bg-gray-400 text-gray-200 line-through'; } rowDiv.appendChild(btn); }); elements.keyboardContainer.appendChild(rowDiv); }); },
             updateStats: () => { elements.currentStreakEl.textContent = currentStreak; elements.bestStreakEl.textContent = bestStreak; },
             updateHintCounter: () => {
-                if (hintsLeft > 0) {
-                    elements.hintCountEl.textContent = hintsLeft;
-                    elements.hintCountEl.classList.remove('hidden');
-                    elements.hintIconContainer.innerHTML = hintIconSVG;
-                } else {
-                    elements.hintCountEl.classList.add('hidden');
-                    elements.hintIconContainer.innerHTML = videoIconSVG;
-                }
+                if (hintsLeft > 0) { elements.hintCountEl.textContent = hintsLeft; elements.hintCountEl.classList.remove('hidden'); elements.hintVideoIcon.classList.add('hidden'); } 
+                else { elements.hintCountEl.classList.add('hidden'); elements.hintVideoIcon.classList.remove('hidden'); }
             },
             useHint: async () => {
                 if (!gameActive) return;
-                if (hintsLeft > 0) {
-                    const unguessed = currentWord.split('').filter(l => !guessedLetters.includes(l));
-                    if (unguessed.length > 0) {
-                        game.handleGuess(unguessed[Math.floor(Math.random() * unguessed.length)]);
-                        hintsLeft--;
-                        vk.setStorage('hints_used', totalFreeHints - hintsLeft);
-                        ui.updateHintCounter();
-                    }
-                } else {
-                    const adWatched = await vk.showReward();
-                    if (adWatched) {
-                        const unguessed = currentWord.split('').filter(l => !guessedLetters.includes(l));
-                        if (unguessed.length > 0) {
-                            game.handleGuess(unguessed[Math.floor(Math.random() * unguessed.length)]);
-                        }
-                    }
-                }
+                const use = (letter) => { game.handleGuess(letter); };
+                const unguessed = currentWord.split('').filter(l => !guessedLetters.includes(l));
+                if (unguessed.length === 0) return;
+                const letterToReveal = unguessed[Math.floor(Math.random() * unguessed.length)];
+                if (hintsLeft > 0) { use(letterToReveal); hintsLeft--; vk.setStorage('hints_used', totalFreeHints - hintsLeft); ui.updateHintCounter(); } 
+                else { const adWatched = await vk.showReward(); if (adWatched) use(letterToReveal); }
             },
-            showDifficultyMenu: () => {
-                gameActive = false;
-                elements.difficultyMenu.classList.remove('hidden', 'opacity-0');
-            },
-            closeMenu: () => {
-                elements.difficultyMenu.classList.add('hidden', 'opacity-0');
-                if (currentWord) gameActive = true;
-            },
+            showDifficultyMenu: () => { gameActive = false; elements.difficultyMenu.classList.remove('hidden', 'opacity-0'); },
+            closeMenu: () => { elements.difficultyMenu.classList.add('hidden', 'opacity-0'); if (currentWord) gameActive = true; },
             showContinueMenu: (savedGame) => {
                 elements.continueGameMenu.classList.remove('hidden');
-                elements.continueBtn.onclick = () => {
-                    elements.continueGameMenu.classList.add('hidden');
-                    game.init(savedGame.difficulty, savedGame);
-                };
-                elements.startNewBtn.onclick = () => {
-                    elements.continueGameMenu.classList.add('hidden');
-                    vk.setStorage('saved_game', null);
-                    ui.showDifficultyMenu();
-                };
+                elements.continueBtn.onclick = () => { elements.continueGameMenu.classList.add('hidden'); game.init(savedGame.difficulty, savedGame); };
+                elements.startNewBtn.onclick = () => { elements.continueGameMenu.classList.add('hidden'); vk.setStorage('saved_game', null); ui.showDifficultyMenu(); };
             }
         };
 
-        // --- Обучение ---
         const tutorial = {
-            steps: [{ text: "Угадайте слово по буквам", target: '#word-container' }, { text: "Нажимайте на буквы, чтобы угадать", target: '#keyboard' }, { text: "За каждую ошибку будет рисоваться человечек", target: '#hangman-container' }, { text: "Используйте подсказки, если застряли", target: '#hint-button' }],
-            currentStep: 0,
+            interval: null,
             start: () => {
                 elements.difficultyMenu.classList.add('hidden', 'opacity-0');
-                game.init('easy');
-                gameActive = false;
-                elements.tutorialOverlay.classList.remove('hidden');
-                tutorial.showStep();
-            },
-            showStep: () => {
-                if (tutorial.currentStep >= tutorial.steps.length) {
-                    tutorial.end(); return;
-                }
-                const step = tutorial.steps[tutorial.currentStep];
-                const targetElement = document.querySelector(step.target);
-                const rect = targetElement.getBoundingClientRect();
-                elements.tutorialText.textContent = step.text;
-                // Позиционируем палец НАД элементом
-                const handHeight = elements.tutorialHand.offsetHeight || 50; // Fallback height
-                elements.tutorialHand.style.top = `${rect.top - handHeight - 10}px`;
-                elements.tutorialHand.style.left = `${rect.left + rect.width / 2 - (elements.tutorialHand.offsetWidth / 2)}px`;
-                tutorial.currentStep++;
+                elements.tutorialModal.classList.remove('hidden');
+                const c = elements.tutorialCanvas; const s = Math.min(c.parentElement.clientWidth, c.parentElement.clientHeight, 200); c.width = s; c.height = s;
+                let step = 0;
+                const word = "АБВ";
+                const steps = [
+                    { text: "Угадайте слово, нажимая на буквы", action: () => { document.getElementById('tutorial-key-A').classList.add('key-anim'); } },
+                    { text: "Если буква верная, она появится в слове", action: () => { document.getElementById('tutorial-key-A').classList.remove('key-anim'); document.querySelector('#tutorial-word > div:nth-child(1) > span').textContent = 'A'; } },
+                    { text: "Если неверная - рисуется виселица", action: () => { document.querySelector('#tutorial-word > div:nth-child(1) > span').textContent = '\u00A0'; document.getElementById('tutorial-key-B').classList.add('key-anim'); draw.gallows(tutorialCtx, s, s); } },
+                    { text: "Постарайтесь угадать, пока вас не повесили!", action: () => { document.getElementById('tutorial-key-B').classList.remove('key-anim'); draw.hangman(tutorialCtx, s, s, 1); } }
+                ];
+                elements.tutorialWord.innerHTML = word.split('').map(l => `<div class="flex flex-col items-center justify-end h-10"><span class="text-black">&nbsp;</span><div class="w-6 h-1.5 bg-gray-800 mt-1"></div></div>`).join('');
+                const runAnimation = () => {
+                    const currentStep = steps[step % steps.length];
+                    elements.tutorialText.textContent = currentStep.text;
+                    currentStep.action();
+                    step++;
+                };
+                runAnimation();
+                tutorial.interval = setInterval(runAnimation, 2000);
             },
             end: () => {
-                elements.tutorialOverlay.classList.add('hidden');
-                localStorage.setItem('hangman_tutorial_shown', 'true');
-                gameActive = true;
-                elements.playAgainButton.click();
+                clearInterval(tutorial.interval);
+                elements.tutorialModal.classList.add('hidden');
+                if (currentWord) { gameActive = true; }
+                else { ui.showDifficultyMenu(); }
             }
         };
 
-        // --- Обработчики событий ---
         window.addEventListener('resize', () => { draw.resizeCanvas(); ui.createKeyboard(); });
-        elements.playAgainButton.addEventListener('click', () => {
-            elements.modal.classList.add('opacity-0', 'pointer-events-none');
-            ui.showDifficultyMenu();
-        });
+        elements.playAgainButton.addEventListener('click', () => { elements.modal.classList.add('opacity-0', 'pointer-events-none'); ui.showDifficultyMenu(); });
         elements.hintButton.addEventListener('click', ui.useHint);
-        elements.difficultyMenu.addEventListener('click', (e) => {
-            if (e.target.closest('button[data-difficulty]')) {
-                game.init(e.target.closest('button[data-difficulty]').dataset.difficulty);
-            }
-        });
+        elements.difficultyMenu.addEventListener('click', (e) => { if (e.target.closest('button[data-difficulty]')) { game.init(e.target.closest('button[data-difficulty]').dataset.difficulty); } });
         elements.startTutorialBtn.addEventListener('click', tutorial.start);
+        elements.closeTutorialButton.addEventListener('click', tutorial.end);
         elements.closeMenuButton.addEventListener('click', ui.closeMenu);
         elements.menuButton.addEventListener('click', ui.showDifficultyMenu);
-        elements.tutorialOverlay.addEventListener('click', tutorial.showStep);
-        elements.tutorialSkip.addEventListener('click', (e) => { e.stopPropagation(); tutorial.end(); });
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') game.saveState(); });
-        vkBridge.subscribe((e) => {
-            if (e.detail.type === 'VKWebAppBannerAdUpdated') {
-                const bannerHeight = e.detail.data.height;
-                elements.appContainer.style.paddingBottom = `${bannerHeight}px`;
-                elements.bannerPlaceholder.style.height = `${bannerHeight}px`;
-            }
-        });
-
-        // --- Запуск ---
+        vkBridge.subscribe((e) => { if (e.detail.type === 'VKWebAppBannerAdUpdated') { const h = e.detail.data.height; elements.appContainer.style.paddingBottom = `${h}px`; elements.bannerPlaceholder.style.height = `${h}px`; } });
+        
         game.start();
     </script>
 </body>
